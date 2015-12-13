@@ -64,8 +64,9 @@ Point rotateOnY(Point p, float theta) {
 
 Point rotateOnZ(Point p, float theta) {
     Point pPrime;
-    pPrime.x = p.x * cos(degToRad(theta)) - p.y * sin(degToRad(theta));
-    pPrime.y = p.x * sin(degToRad(theta)) + p.y * cos(degToRad(theta));
+    float thetaInRad = degToRad(theta);
+    pPrime.x = p.x * cos(thetaInRad) - p.y * sin(thetaInRad);
+    pPrime.y = p.x * sin(thetaInRad) + p.y * cos(thetaInRad);
     pPrime.z = p.z;
     return pPrime;
 }
