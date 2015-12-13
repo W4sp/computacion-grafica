@@ -14,7 +14,6 @@ Point scale(Point p, float S[]);
 Point rotateOnX(Point p, float theta);
 Point rotateOnY(Point p, float theta);
 Point rotateOnZ(Point p, float theta);
-Point rotateOnAny(Point p, float theta);
 float degToRad(float deg);
 void printPoint(Point p);
 
