@@ -3,6 +3,8 @@
 #include <cmath>
 #include <vector>
 #include <armadillo>
+#include <GL/glew.h>
+#include <GL/freeglut.h>
 
 #define PI 3.14159265
 
@@ -13,9 +15,15 @@ struct Point {
 };
 
 typedef std::pair<std::vector<std::string>, std::vector<float>> Transformation;
+std::vector<Point> oPoints;
+std::vector<Point> pPrimes;
 
+void process();
 arma::mat getCompositeMatrix(std::vector<Transformation> &transformations);
 std::vector<Point> transform(std::vector<Point> &points, arma::mat &T);
+void drawScene();
+void resize(int w, int h);
+void setup();
 Point translate(Point p, float D[]);
 Point scale(Point p, float S[]);
 Point rotateOnX(Point p, float theta);
@@ -24,19 +32,92 @@ Point rotateOnZ(Point p, float theta);
 float degToRad(float deg);
 void printPoint(Point p);
 
-int main() {
+int main(int argc, char* argv[]) {
+    process();
+
+    /* OpenGL related calls. */
+    glutInit(&argc, argv);
+    glutInitContextVersion(2, 1);
+    glutInitContextProfile(GLUT_COMPATIBILITY_PROFILE);
+    glutInitDisplayMode(GLUT_SINGLE | GLUT_RGBA);
+
+    glutInitWindowSize(500, 500);
+    glutInitWindowPosition(100, 100);
+    glutCreateWindow("transformaciones3d.cpp");
+
+    glutDisplayFunc(drawScene);
+    glutReshapeFunc(resize);
+
+    glewInit();
+
+    setup();
+
+    glutMainLoop();
+
+    return EXIT_SUCCESS;
+}
+
+void drawScene() {
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    glLoadIdentity();
+
+    gluLookAt(15.0, 10.0, 15.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+
+    /* Draw red lines to depict the axes. */
+    glColor3f(1.0, 0.0, 0.0);
+    glBegin(GL_LINES);
+        glVertex3f(0.0, 0.0, 0.0);
+        glVertex3f(100.0, 0.0, 0.0);
+        glVertex3f(0.0, 0.0, 0.0);
+        glVertex3f(0.0, 100.0, 0.0);
+        glVertex3f(0.0, 0.0, 0.0);
+        glVertex3f(0.0, 0.0, 100.0);
+    glEnd();
+
+    /* Draw original points. */
+    glColor3f(0.0, 0.0, 0.0);
+    glBegin(GL_POLYGON);
+        for (auto p : oPoints) {
+            glVertex3f(p.x, p.y, p.z);
+        }
+    glEnd();
+
+    /* Draw transformed points. */
+    glColor3f(0.0, 1.0, 0.0);
+    glBegin(GL_POLYGON);
+        for (auto p : pPrimes) {
+            glVertex3f(p.x, p.y, p.z);
+        }
+    glEnd();
+
+    glFlush();
+}
+
+void resize(int w, int h) {
+    glViewport(0, 0, w, h);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glFrustum(-5.0, 5.0, -5.0, 5.0, 10.0, 100.0);
+    glMatrixMode(GL_MODELVIEW);
+}
+
+void setup() {
+    glClearColor(1.0, 1.0, 1.0, 0.0);
+}
+
+void process() {
     int n, t;
     arma::mat T;
     while (std::cin >> n) {
         std::cin >> t;
-        std::vector<Point> points;
         std::vector<Transformation> transformations;
 
         /* Read all the points */
         for (int i = 0; i < n; i++) {
             Point p;
             std::cin >> p.x >> p.y >> p.z;
-            points.push_back(p);
+            oPoints.push_back(p);
         }
 
         /* Read all the vectors of transformations. */
@@ -68,11 +149,10 @@ int main() {
         }
         T = getCompositeMatrix(transformations);
         T.print();
-        for (auto r : transform(points, T)) {
-            printPoint(r);
+        for (auto r : transform(oPoints, T)) {
+            pPrimes.push_back(r);
         }
     }
-    return EXIT_SUCCESS;
 }
 
 /*
