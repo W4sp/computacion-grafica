@@ -1,5 +1,8 @@
 #include <iostream>
+#include <iomanip>
 #include <cmath>
+#include <vector>
+#include <armadillo>
 
 #define PI 3.14159265
 
@@ -9,6 +12,10 @@ struct Point {
     float z;
 };
 
+typedef std::pair<std::vector<std::string>, std::vector<float>> Transformation;
+
+arma::mat getCompositeMatrix(std::vector<Transformation> &transformations);
+std::vector<Point> transform(std::vector<Point> &points, arma::mat &T);
 Point translate(Point p, float D[]);
 Point scale(Point p, float S[]);
 Point rotateOnX(Point p, float theta);
@@ -18,15 +25,99 @@ float degToRad(float deg);
 void printPoint(Point p);
 
 int main() {
-    Point p;
-    float D[3] = {1, 1, 1}, S[3] = {2, 2, 2};
-    p.x = 1;
-    p.y = 1;
-    p.z = 1;
-    printPoint(translate(p, D));
-    printPoint(scale(p, S));
-    printPoint(rotateOnX(p, 90));
+    int n, t;
+    arma::mat T;
+    while (std::cin >> n) {
+        std::cin >> t;
+        std::vector<Point> points;
+        std::vector<Transformation> transformations;
+        for (int i = 0; i < n; i++) {
+            Point p;
+            std::cin >> p.x >> p.y >> p.z;
+            points.push_back(p);
+        }
+        for (int i = 0; i < t; i++) {
+            Transformation t;
+            std::string tName;
+            std::cin >> tName;
+            t.first.push_back(tName);
+            if (t.first[0] == "t" || t.first[0] == "s") {
+                float c;
+                std::cin >> c;
+                t.second.push_back(c);
+                std::cin >> c;
+                t.second.push_back(c);
+                std::cin >> c;
+                t.second.push_back(c);
+            } else if (t.first[0] == "r") {
+                float c;
+                std::string axis;
+                std::cin >> axis;
+                t.first.push_back(axis);
+                std::cin >> c;
+                t.second.push_back(c);
+            }
+            transformations.push_back(t);
+        }
+        T = getCompositeMatrix(transformations);
+        T.print();
+        for (auto r : transform(points, T)) {
+            printPoint(r);
+        }
+    }
     return EXIT_SUCCESS;
+}
+
+arma::mat getCompositeMatrix(std::vector<Transformation> &transformations) {
+    arma::mat T(4, 4, arma::fill::eye), B(4, 4);
+    for (auto t : transformations) {
+        if (t.first[0] == "t") {
+            B = { {1, 0, 0, t.second[0]},
+                  {0, 1, 0, t.second[1]},
+                  {0, 0, 1, t.second[2]},
+                  {0, 0, 0, 1} };
+        } else if (t.first[0] == "s") {
+            B = { {t.second[0], 0, 0, 0},
+                  {0, t.second[1], 0, 0},
+                  {0, 0, t.second[2], 0},
+                  {0, 0, 0, 1} };
+        } else if (t.first[0] == "r") {
+            float theta = degToRad(t.second[0]);
+            float cosTheta = cos(theta), sinTheta = sin(theta);
+            if (t.first[1] == "x") {
+                B = { {1, 0, 0, 0},
+                      {0, cosTheta, -sinTheta, 0},
+                      {0, sinTheta, cosTheta, 0},
+                      {0, 0, 0, 1} };
+            } else if (t.first[1] == "y") {
+                B = { {cosTheta, 0, sinTheta, 0},
+                      {0, 1, 0, 0},
+                      {-sinTheta, 0, cosTheta, 0},
+                      {0, 0, 0, 1} };
+            } else {
+                B = { {cosTheta, -sinTheta, 0, 0},
+                      {sinTheta, cosTheta, 0, 0},
+                      {0, 0, 1, 0},
+                      {0, 0, 0, 1} };
+            }
+        }
+        T *= B;
+    }
+    return T;
+}
+
+std::vector<Point> transform(std::vector<Point> &points, arma::mat &T) {
+    std::vector<Point> res;
+    for (auto point : points) {
+        Point p;
+        arma::mat v({point.x, point.y, point.z, 1}), pPrime;
+        pPrime = T * v.t();
+        p.x = pPrime[0];
+        p.y = pPrime[1];
+        p.z = pPrime[2];
+        res.push_back(p);
+    }
+    return res;
 }
 
 Point translate(Point p, float D[]) {
@@ -75,5 +166,6 @@ float degToRad(float deg) {
 }
 
 void printPoint(Point p) {
-    std::cout << "(" << p.x << ", " << p.y << ", " << p.z << ")" << std::endl;
+    std::cout << std::fixed << std::setprecision(4);
+    std::cout << p.x << " " << p.y << " " << p.z << std::endl;
 }
