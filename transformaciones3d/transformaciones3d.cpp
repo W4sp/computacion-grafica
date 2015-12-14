@@ -31,16 +31,23 @@ int main() {
         std::cin >> t;
         std::vector<Point> points;
         std::vector<Transformation> transformations;
+
+        /* Read all the points */
         for (int i = 0; i < n; i++) {
             Point p;
             std::cin >> p.x >> p.y >> p.z;
             points.push_back(p);
         }
+
+        /* Read all the vectors of transformations. */
         for (int i = 0; i < t; i++) {
             Transformation t;
             std::string tName;
             std::cin >> tName;
             t.first.push_back(tName);
+
+            /* Treat translation and scaling differently because of the
+             * number of parameters */
             if (t.first[0] == "t" || t.first[0] == "s") {
                 float c;
                 std::cin >> c;
@@ -68,8 +75,15 @@ int main() {
     return EXIT_SUCCESS;
 }
 
+/*
+ * Calculates the composite matrix from the vector of individual transformations
+ * by multiplying them from left to right.
+ */
 arma::mat getCompositeMatrix(std::vector<Transformation> &transformations) {
     arma::mat T(4, 4, arma::fill::eye), B(4, 4);
+
+    /* Iterate through all the transformation vectors mapping each to the
+     * corresponding transformation matrix in order to perform the product. */
     for (auto t : transformations) {
         if (t.first[0] == "t") {
             B = { {1, 0, 0, t.second[0]},
@@ -106,6 +120,9 @@ arma::mat getCompositeMatrix(std::vector<Transformation> &transformations) {
     return T;
 }
 
+/*
+ * Applies the transformations to each point in the vector.
+ */
 std::vector<Point> transform(std::vector<Point> &points, arma::mat &T) {
     std::vector<Point> res;
     for (auto point : points) {
