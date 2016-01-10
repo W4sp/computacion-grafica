@@ -46,9 +46,9 @@ float XAngle = 0.0;
 float YAngle = 0.0;
 
 /* Descripción textual del L-system */
-char lsystem_desc[MAX_DESC+1];
-double langle 	= DEFAULT_ANGLE;
-double lstep 	= DEFAULT_STEP;
+char lsystem_desc[MAX_DESC + 1];
+double langle = DEFAULT_ANGLE;
+double lstep = DEFAULT_STEP;
 
 /* Punto inicial */
 double P[DIM] = {0.0, 0.0, 0.0};
@@ -167,10 +167,10 @@ void setup() {
 
 int main(int argc, char* argv[]) {
 
-	/* Leer parámetros del L-system desde stdin */
-	scanf("%lf", &lstep);
-	scanf("%lf", &langle);
-	scanf("%s", &lsystem_desc);
+    /* Leer parámetros del L-system desde stdin */
+    scanf("%lf", &lstep);
+    scanf("%lf", &langle);
+    std::cin >> lsystem_desc;
 
     read_desc(lsystem_desc, P);
 
