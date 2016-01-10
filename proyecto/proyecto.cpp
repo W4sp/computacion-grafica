@@ -1,3 +1,10 @@
+/**
+ * L-systems
+ * Basado en el libro de A. Lindenmayer "The Algorithmic Beauty of Plants"
+ *
+ * Para compilar: make
+ * Para ejecutar: ./proyecto < data/[0-8].txt
+ */
 #include <iostream>
 #include <cstdio>
 #include <cstdlib>
@@ -13,7 +20,7 @@
 #define ESC             27
 #define DEBUG           1
 #define DIM             3
-#define MAX_DESC        256
+#define MAX_DESC        16500
 #define DEFAULT_STEP    1
 #define DEFAULT_ANGLE   45
 
@@ -39,7 +46,10 @@ float XAngle = 0.0;
 float YAngle = 0.0;
 
 /* Descripción textual del L-system */
-char lsystem_desc[MAX_DESC+1] = {"F(2)[-F[-F]F]/(137.5)F(1.5)[-F]F"};
+char lsystem_desc[MAX_DESC+1];
+double langle 	= DEFAULT_ANGLE;
+double lstep 	= DEFAULT_STEP;
+
 /* Punto inicial */
 double P[DIM] = {0.0, 0.0, 0.0};
 
@@ -62,7 +72,7 @@ void get_argument(char *desc, int start, double *arg, int *jump);
 void read_desc(char *desc, double *P);
 
 void drawScene() {
-    float distance = 20.0;
+    float distance = 15.0;
     std::cout << "XAngle: " << XAngle << ", YAngle: " << YAngle << std::endl;
     float XRad = XAngle / 180 * PI;
     float YRad = YAngle / 180 * PI;
@@ -78,8 +88,8 @@ void drawScene() {
 
     glLoadIdentity();
 
-    gluLookAt(x + 5.0, 5.0, z + 5.0,
-              0.0, 0.0, 0.0,
+    gluLookAt(x + 5.0, 20.0, z + 3.0,
+              0.0, 15.0, 0.0,
               0.0, 1.0, 0.0);
 
     /* Draw red lines to depict the axes. */
@@ -129,7 +139,7 @@ void resize(int w, int h) {
     glViewport(0, 0, w, h);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    glFrustum(-15.0, 15.0, -15.0, 15.0, 10.0, 50.0);
+    glFrustum(-10.0, 10.0, -10.0, 10.0, 10.0, 50.0);
     glMatrixMode(GL_MODELVIEW);
 }
 
@@ -156,6 +166,12 @@ void setup() {
 }
 
 int main(int argc, char* argv[]) {
+
+	/* Leer parámetros del L-system desde stdin */
+	scanf("%lf", &lstep);
+	scanf("%lf", &langle);
+	scanf("%s", &lsystem_desc);
+
     read_desc(lsystem_desc, P);
 
     /* OpenGL related calls. */
@@ -188,11 +204,12 @@ int main(int argc, char* argv[]) {
 void mat_by_mat(double result[DIM][DIM], double A[DIM][DIM], double B[DIM][DIM]) {
     int i, j, k;
     double sum;
-    for(i = 0; i < DIM; i++) {
-        for(j = 0; j < DIM; j++) {
+    for (i = 0; i < DIM; i++) {
+        for (j = 0; j < DIM; j++) {
             sum = 0.0;
-            for(k = 0; k < DIM; k++)
-                sum += A[i][k]*B[k][j];
+            for (k = 0; k < DIM; k++) {
+                sum += A[i][k] * B[k][j];
+            }
             result[i][j] = sum;
         }
     }
@@ -201,15 +218,15 @@ void mat_by_mat(double result[DIM][DIM], double A[DIM][DIM], double B[DIM][DIM])
 /* Guarda el resultado de una matriz en otra */
 void assign_mat(double result[DIM][DIM], double M[DIM][DIM]) {
     int i, j;
-    for(i = 0; i < DIM; i++)
-        for(j = 0; j < DIM; j++)
+    for (i = 0; i < DIM; i++)
+        for (j = 0; j < DIM; j++)
             result[i][j] = M[i][j];
 }
 
 /* Guarda el resultado de un vector en otro */
 void assign_vec(double result[DIM], double A[DIM]) {
     int i;
-    for(i = 0; i < DIM; i++)
+    for (i = 0; i < DIM; i++)
         result[i] = A[i];
 }
 
@@ -217,8 +234,8 @@ void assign_vec(double result[DIM], double A[DIM]) {
 void print_mat(double M[DIM][DIM]) {
     int i, j;
     printf("\n");
-    for(i = 0; i < DIM; i++) {
-        for(j = 0; j < DIM; j++)
+    for (i = 0; i < DIM; i++) {
+        for (j = 0; j < DIM; j++)
             printf("%f ", M[i][j]);
         printf("\n");
     }
@@ -229,7 +246,7 @@ void print_mat(double M[DIM][DIM]) {
 void print_vec(double A[DIM]) {
     int i;
     printf("\n");
-    for(i = 0; i < DIM; i++)
+    for (i = 0; i < DIM; i++)
         printf("%f ", A[i]);
     printf("\n\n");
 }
@@ -237,17 +254,17 @@ void print_vec(double A[DIM]) {
 /* Multiplica matriz por vector */
 void mat_by_vec(double result[DIM], double M[DIM][DIM], double V[DIM]) {
     int i, j;
-    for(i = 0; i < DIM; i++) {
+    for (i = 0; i < DIM; i++) {
         result[i] = 0;
-        for(j = 0; j < DIM; j++)
-            result[i] += M[i][j]*V[j];
+        for (j = 0; j < DIM; j++)
+            result[i] += M[i][j] * V[j];
     }
 }
 
 /* Suma dos vectores */
 void sum_vec(double result[DIM], double A[DIM], double B[DIM]) {
     int i;
-    for(i = 0; i < DIM; i++)
+    for (i = 0; i < DIM; i++)
         result[i] = A[i] + B[i];
 }
 
@@ -257,10 +274,10 @@ void sum_vec(double result[DIM], double A[DIM], double B[DIM]) {
 
 /* Rotar en torno a eje U (Z) */
 void Ru_matrix(double R[DIM][DIM], double angle) {
-    double alfa = (angle*PI)/180.0;
+    double alfa = (angle * PI)/180.0;
     double mat[DIM][DIM] = {
         {cos(alfa), sin(alfa), 0},
-        {sin(alfa*-1.0), cos(alfa), 0},
+        {sin(alfa * -1.0), cos(alfa), 0},
         {0, 0, 1}
     };
     assign_mat(R, mat);
@@ -268,9 +285,9 @@ void Ru_matrix(double R[DIM][DIM], double angle) {
 
 /* Rotar en torno a eje L (Y) */
 void Rl_matrix(double R[DIM][DIM], double angle) {
-    double alfa = (angle*PI)/180.0;
+    double alfa = (angle * PI)/180.0;
     double mat[DIM][DIM] = {
-        {cos(alfa), 0, sin(alfa*-1.0)},
+        {cos(alfa), 0, sin(alfa * -1.0)},
         {0, 1, 0},
         {sin(alfa), 0, cos(alfa)}
     };
@@ -279,10 +296,10 @@ void Rl_matrix(double R[DIM][DIM], double angle) {
 
 /* Rotar en torno a eje H (X) */
 void Rh_matrix(double R[DIM][DIM], double angle) {
-    double alfa = (angle*PI)/180.0;
+    double alfa = (angle * PI)/180.0;
     double mat[DIM][DIM] = {
         {1, 0, 0},
-        {0, cos(alfa), sin(alfa*-1.0)},
+        {0, cos(alfa), sin(alfa * -1.0)},
         {0, sin(alfa), cos(alfa)}
     };
     assign_mat(R, mat);
@@ -303,13 +320,13 @@ void get_argument(char *desc, int start, double *arg, int *jump) {
     if (desc[i+1] == '(') {
         i += 2;
         while (desc[i] != ')') {
-            str_arg[i-start-2] = desc[i];
+            str_arg[i - start - 2] = desc[i];
             i++;
         }
 
         /* atof: convierte string a float/double */
         *arg = atof(str_arg);
-        *jump = i-start;
+        *jump = i - start;
     }
     else
         /* Un salto de 0 significa que no hay argumento */
@@ -356,7 +373,7 @@ void read_desc(char *desc, double *P) {
         switch (action) {
             case 'F':
                 /* Si no hay argumento, entonces tomar valor por defecto */
-                if (!jump) arg = DEFAULT_STEP;
+                if (!jump) arg = lstep;
 
                 /* Tamaño del segmento a dibujar */
                 L[0] = arg;
@@ -369,7 +386,7 @@ void read_desc(char *desc, double *P) {
                 lines.push_back(line);
                 break;
             case '+':
-                if (!jump) arg = DEFAULT_ANGLE;
+                if (!jump) arg = langle;
 
                 Ru_matrix(R, arg);
                 /* Aplicar la transformación R a T: T*R */
@@ -379,7 +396,7 @@ void read_desc(char *desc, double *P) {
                 if (DEBUG) printf("Rotar hacia izquierda en torno a eje U.  Ru(%f)\n", arg);
                 break;
             case '-':
-                if (!jump) arg = DEFAULT_ANGLE;
+                if (!jump) arg = langle;
 
                 Ru_matrix(R, arg*-1.0);
                 /* Aplicar la transformación R a T: T*R */
@@ -389,7 +406,7 @@ void read_desc(char *desc, double *P) {
                 if (DEBUG) printf("Rotar hacia derecha en torno a eje U. Ru(-%f)\n", arg);
                 break;
             case '&':
-                if (!jump) arg = DEFAULT_ANGLE;
+                if (!jump) arg = langle;
 
                 Rl_matrix(R, arg);
                 /* Aplicar la transformación R a T: T*R */
@@ -399,7 +416,7 @@ void read_desc(char *desc, double *P) {
                 if (DEBUG) printf("Rotar hacia izquierda en torno a eje L. Rl(%f)\n", arg);
                 break;
             case '^':
-                if (!jump) arg = DEFAULT_ANGLE;
+                if (!jump) arg = langle;
 
                 Rl_matrix(R, arg*-1.0);
                 /* Aplicar la transformación R a T: T*R */
@@ -409,7 +426,7 @@ void read_desc(char *desc, double *P) {
                 if (DEBUG) printf("Rotar hacia derecha en torno a eje L. Rl(-%f)\n", arg);
                 break;
             case '\\':
-                if (!jump) arg = DEFAULT_ANGLE;
+                if (!jump) arg = langle;
 
                 Rh_matrix(R, arg);
                 /* Aplicar la transformación R a T: T*R */
@@ -419,7 +436,7 @@ void read_desc(char *desc, double *P) {
                 if (DEBUG) printf("Rotar hacia izquierda en torno a eje H. Rh(%f)\n", arg);
                 break;
             case '/':
-                if (!jump) arg = DEFAULT_ANGLE;
+                if (!jump) arg = langle;
 
                 Rh_matrix(R, arg*-1.0);
                 /* Aplicar la transformación R a T: T*R */
