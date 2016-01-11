@@ -53,7 +53,6 @@ double lstep = DEFAULT_STEP;
 /* Punto inicial */
 double P[DIM] = {0.0, 0.0, 0.0};
 
-
 void drawScene();
 void resize(int w, int h);
 void keyInput(unsigned char key, int x, int y);
@@ -73,14 +72,18 @@ void read_desc(char *desc, double *P);
 
 void drawScene() {
     float distance = 15.0;
-    std::cout << "XAngle: " << XAngle << ", YAngle: " << YAngle << std::endl;
     float XRad = XAngle / 180 * PI;
     float YRad = YAngle / 180 * PI;
     float x = sin(XRad) * distance;
     float y = sin(YRad) * distance;
     float z = cos(XRad) * distance;
-    std::cout << x + 15.0 << std::endl;
-    std::cout << y + 10.0 << std::endl;
+
+    float lightPos0[] = {1.0, 5.0, 7.0, 1.0};
+
+    float matAmbAndDif1[] = {0.9, 0.0, 0.0, 1.0};
+    float matAmbAndDif2[] = {0.0, 0.9, 0.0, 1.0};
+    float matSpec[] = {1.0, 1.0, 1.0, 1.0};
+    float matShine[] = {50.0};
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -91,6 +94,23 @@ void drawScene() {
     gluLookAt(x + 5.0, 20.0, z + 3.0,
               0.0, 15.0, 0.0,
               0.0, 1.0, 0.0);
+
+    glDisable(GL_LIGHTING);
+
+    glPushMatrix();
+    glLightfv(GL_LIGHT0, GL_POSITION, lightPos0);
+    glTranslatef(lightPos0[0], lightPos0[1], lightPos0[2]);
+    glColor3f(1.0, 1.0, 1.0);
+    glutWireSphere(0.05, 8, 8);
+    glPopMatrix();
+
+    glEnable(GL_LIGHTING);
+
+    glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, matAmbAndDif1);
+    glMaterialfv(GL_FRONT, GL_SPECULAR, matSpec);
+    glMaterialfv(GL_FRONT, GL_SHININESS, matShine);
+
+    glLineWidth(3.0f);
 
     /* Draw red lines to depict the axes. */
     glColor4f(1.0, 0.0, 0.0, 0.35);
@@ -122,12 +142,11 @@ void drawScene() {
         glVertex4f(0.0, 10.0, -10.0, 1);
     glEnd();
 
-    glColor4f(1.0, 1.0, 1.0, 1.0);
+    /* Se renderizan los segmentos que conforman el fractal. */
+    glColor4f(0.0, 1.0, 1.0, 1.0);
     glBegin(GL_LINES);
         for (auto l : lines) {
-            //print_vec(l.first.data());
             glVertex4f(l.first[0], l.first[1], l.first[2], 1.0);
-            //print_vec(l.second.data());
             glVertex4f(l.second[0], l.second[1], l.second[2], 1.0);
         }
     glEnd();
@@ -162,7 +181,25 @@ void specialKeyInput(int key, int x, int y) {
 }
 
 void setup() {
-    glClearColor(0.0, 0.0, 0.0, 0.0);
+    /* Color de fondo negro. */
+    glClearColor(0.0, 0.0, 0.0, 1.0);
+
+    /* Activar iluminación de OpenGL. */
+    glEnable(GL_LIGHTING);
+
+    float lightAmb[] = {0.0, 0.0, 0.0, 1.0};
+    /* Usualmente diffuse y specular se asignan a una luz brillante
+     * para que no se altere el color de los objetos. */
+    float lightDifAndSpec[] = {1.0, 1.0, 1.0, 1.0};
+    float globAmb[] = {0.5, 0.5, 0.5, 1.0};
+
+    /* Se setean las propiedades de luz de la fuente de luz 0. */
+    glLightfv(GL_LIGHT0, GL_AMBIENT, lightAmb);
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, lightDifAndSpec);
+    glLightfv(GL_LIGHT0, GL_SPECULAR, lightDifAndSpec);
+
+    glEnable(GL_LIGHT0); // Activar luz 0.
+    glLightModelfv(GL_LIGHT_MODEL_AMBIENT, globAmb);
 }
 
 int main(int argc, char* argv[]) {
@@ -176,8 +213,8 @@ int main(int argc, char* argv[]) {
 
     /* OpenGL related calls. */
     glutInit(&argc, argv);
-    glutInitContextVersion(2, 1);
-    glutInitContextProfile(GLUT_COMPATIBILITY_PROFILE);
+    /*glutInitContextVersion(2, 1);
+    glutInitContextProfile(GLUT_COMPATIBILITY_PROFILE);*/
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA);
 
     glutInitWindowSize(500, 500);
