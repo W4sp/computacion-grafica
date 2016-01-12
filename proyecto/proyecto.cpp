@@ -78,8 +78,7 @@ void drawScene() {
     float y = sin(YRad) * distance;
     float z = cos(XRad) * distance;
 
-    float lightPos0[] = {1.0, 5.0, 7.0, 1.0};
-
+    float lightPos0[] = {3.0, 17.0, 5.0, 1.0};
     float matAmbAndDif1[] = {0.9, 0.0, 0.0, 1.0};
     float matAmbAndDif2[] = {0.0, 0.9, 0.0, 1.0};
     float matSpec[] = {1.0, 1.0, 1.0, 1.0};
@@ -95,22 +94,22 @@ void drawScene() {
               0.0, 15.0, 0.0,
               0.0, 1.0, 0.0);
 
+    glLightfv(GL_LIGHT0, GL_POSITION, lightPos0);
     glDisable(GL_LIGHTING);
 
     glPushMatrix();
-    glLightfv(GL_LIGHT0, GL_POSITION, lightPos0);
-    glTranslatef(lightPos0[0], lightPos0[1], lightPos0[2]);
-    glColor3f(1.0, 1.0, 1.0);
-    glutWireSphere(0.05, 8, 8);
+    glTranslatef(lightPos0[0], lightPos0[1], lightPos0[2] - 15);
+    glColor3f(0.0, 0.0, 1.0);
+    //glutSolidSphere(2, 8, 8);
     glPopMatrix();
 
     glEnable(GL_LIGHTING);
 
-    glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, matAmbAndDif1);
-    glMaterialfv(GL_FRONT, GL_SPECULAR, matSpec);
-    glMaterialfv(GL_FRONT, GL_SHININESS, matShine);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, matAmbAndDif1);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, matSpec);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, matShine);
 
-    glLineWidth(3.0f);
+    glLineWidth(1.0f);
 
     /* Draw red lines to depict the axes. */
     glColor4f(1.0, 0.0, 0.0, 0.35);
@@ -182,7 +181,8 @@ void specialKeyInput(int key, int x, int y) {
 
 void setup() {
     /* Color de fondo negro. */
-    glClearColor(0.0, 0.0, 0.0, 1.0);
+    glClearColor(0.0, 0.0, 0.0, 0.0);
+    //glEnable(GL_DEPTH_TEST);
 
     /* Activar iluminación de OpenGL. */
     glEnable(GL_LIGHTING);
@@ -191,7 +191,7 @@ void setup() {
     /* Usualmente diffuse y specular se asignan a una luz brillante
      * para que no se altere el color de los objetos. */
     float lightDifAndSpec[] = {1.0, 1.0, 1.0, 1.0};
-    float globAmb[] = {0.5, 0.5, 0.5, 1.0};
+    float globAmb[] = {0.3, 0.3, 0.3, 1.0};
 
     /* Se setean las propiedades de luz de la fuente de luz 0. */
     glLightfv(GL_LIGHT0, GL_AMBIENT, lightAmb);
@@ -215,7 +215,7 @@ int main(int argc, char* argv[]) {
     glutInit(&argc, argv);
     /*glutInitContextVersion(2, 1);
     glutInitContextProfile(GLUT_COMPATIBILITY_PROFILE);*/
-    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA);
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
 
     glutInitWindowSize(500, 500);
     glutInitWindowPosition(100, 100);
