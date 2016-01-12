@@ -109,7 +109,20 @@ void drawScene() {
     glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, matSpec);
     glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, matShine);
 
-    glLineWidth(1.0f);
+    int i = 0;
+    for (float v = 100.0; v > -100.0; v -= 5.0) {
+        glBegin(GL_TRIANGLE_STRIP);
+        for (float u = -100.0; u < 100; u += 5.0) {
+            if (i % 2) glColor4f(0.0, 0.5, 0.5, 1.0);
+            else glColor4f(1.0, 1.0, 1.0, 1.0);
+            glNormal3f(0.0, 1.0, 0.0);
+            glVertex3f(u, 0.0, v - 5.0);
+            glVertex3f(u, 0.0, v);
+            i++;
+        }
+        glEnd();
+        i++;
+    }
 
     /* Draw red lines to depict the axes. */
     glColor4f(1.0, 0.0, 0.0, 0.35);
@@ -150,8 +163,19 @@ void drawScene() {
         }
     glEnd();
 
-    glTranslatef(5.0, 15.0, 3.0);
+    /* Big yellow sphere */
+    glPushMatrix();
+    glTranslatef(8.0, 15.0, -1.0);
+    glColor4f(1.0, 1.0, 0.0, 1.0);
     glutSolidSphere(1.5, 200, 200);
+    glPopMatrix();
+
+    /* Small green sphere */
+    glPushMatrix();
+    glTranslatef(5.5, 16, 2.0);
+    glColor4f(0.0, 1.0, 0.0, 1.0);
+    glutSolidSphere(0.5, 200, 200);
+    glPopMatrix();
 
     glutSwapBuffers();
 }
@@ -189,6 +213,10 @@ void setup() {
 
     /* Activar iluminación de OpenGL. */
     glEnable(GL_LIGHTING);
+    glEnable(GL_COLOR_MATERIAL);
+    glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE);
+
+    glShadeModel(GL_FLAT);
 
     float lightAmb[] = {0.0, 0.0, 0.0, 1.0};
     /* Usualmente diffuse y specular se asignan a una luz brillante
