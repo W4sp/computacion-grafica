@@ -86,7 +86,7 @@ void drawScene() {
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glLoadIdentity();
 
@@ -94,13 +94,13 @@ void drawScene() {
               0.0, 15.0, 0.0,
               0.0, 1.0, 0.0);
 
-    glLightfv(GL_LIGHT0, GL_POSITION, lightPos0);
     glDisable(GL_LIGHTING);
 
     glPushMatrix();
-    glTranslatef(lightPos0[0], lightPos0[1], lightPos0[2] - 15);
-    glColor3f(0.0, 0.0, 1.0);
-    //glutSolidSphere(2, 8, 8);
+    glLightfv(GL_LIGHT0, GL_POSITION, lightPos0);
+    glTranslatef(lightPos0[0], lightPos0[1], lightPos0[2]);
+    glColor3f(1.0, 1.0, 1.0);
+    glutWireSphere(0.05, 8, 8);
     glPopMatrix();
 
     glEnable(GL_LIGHTING);
@@ -150,6 +150,9 @@ void drawScene() {
         }
     glEnd();
 
+    glTranslatef(5.0, 15.0, 3.0);
+    glutSolidSphere(1.5, 200, 200);
+
     glutSwapBuffers();
 }
 
@@ -182,7 +185,7 @@ void specialKeyInput(int key, int x, int y) {
 void setup() {
     /* Color de fondo negro. */
     glClearColor(0.0, 0.0, 0.0, 0.0);
-    //glEnable(GL_DEPTH_TEST);
+    glEnable(GL_DEPTH_TEST);
 
     /* Activar iluminación de OpenGL. */
     glEnable(GL_LIGHTING);
@@ -191,7 +194,7 @@ void setup() {
     /* Usualmente diffuse y specular se asignan a una luz brillante
      * para que no se altere el color de los objetos. */
     float lightDifAndSpec[] = {1.0, 1.0, 1.0, 1.0};
-    float globAmb[] = {0.3, 0.3, 0.3, 1.0};
+    float globAmb[] = {0.2, 0.2, 0.2, 1.0};
 
     /* Se setean las propiedades de luz de la fuente de luz 0. */
     glLightfv(GL_LIGHT0, GL_AMBIENT, lightAmb);
