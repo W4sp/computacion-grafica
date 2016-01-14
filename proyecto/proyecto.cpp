@@ -18,7 +18,7 @@
 
 #define PI              3.14159265
 #define ESC             27
-#define DEBUG           1
+#define DEBUG           0
 #define DIM             3
 #define MAX_DESC        16500
 #define DEFAULT_STEP    1
@@ -112,39 +112,19 @@ void drawScene() {
     int i = 0;
     for (float v = 100.0; v > -100.0; v -= 5.0) {
         glBegin(GL_TRIANGLE_STRIP);
-        for (float u = -100.0; u < 100; u += 5.0) {
+        for (float u = -100.0; u < 100.0; u += 5.0) {
             if (i % 2) glColor4f(0.0, 0.5, 0.5, 1.0);
             else glColor4f(1.0, 1.0, 1.0, 1.0);
             glNormal3f(0.0, 1.0, 0.0);
             glVertex3f(u, 0.0, v - 5.0);
             glVertex3f(u, 0.0, v);
+            glVertex3f(u + 5.0, 0.0, v - 5.0);
+            glVertex3f(u + 5.0, 0.0, v);
             i++;
         }
         glEnd();
         i++;
     }
-
-    /* Draw red lines to depict the axes. */
-    glColor4f(1.0, 0.0, 0.0, 0.35);
-    glBegin(GL_LINES);
-        glVertex4f(0.0, 0.0, 0.0, 1);
-        glVertex4f(1000.0, 0.0, 0.0, 1);
-        glVertex4f(0.0, 0.0, 0.0, 1);
-        glVertex4f(0.0, 1000.0, 0.0, 1);
-        glVertex4f(0.0, 0.0, 0.0, 1);
-        glVertex4f(0.0, 0.0, 1000.0, 1);
-    glEnd();
-
-    /* Draw blue lines to depict the negative part of the axes. */
-    glColor4f(0.0, 0.0, 1.0, 0.35);
-    glBegin(GL_LINES);
-        glVertex4f(0.0, 0.0, 0.0, 1);
-        glVertex4f(-1000.0, 0.0, 0.0, 1);
-        glVertex4f(0.0, 0.0, 0.0, 1);
-        glVertex4f(0.0, -1000.0, 0.0, 1);
-        glVertex4f(0.0, 0.0, 0.0, 1);
-        glVertex4f(0.0, 0.0, -1000.0, 1);
-    glEnd();
 
     glColor4f(0.0, 0.0, 1.0, 0.35);
     glBegin(GL_POLYGON);
@@ -216,7 +196,7 @@ void setup() {
     glEnable(GL_COLOR_MATERIAL);
     glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE);
 
-    glShadeModel(GL_FLAT);
+    glShadeModel(GL_SMOOTH);
 
     float lightAmb[] = {0.0, 0.0, 0.0, 1.0};
     /* Usualmente diffuse y specular se asignan a una luz brillante
@@ -446,10 +426,8 @@ void read_desc(char *desc, double *P) {
                 /* Tamaño del segmento a dibujar */
                 L[0] = arg;
                 mat_by_vec(P, T, L);
-                printf("Dibujar segmento (%f, %f, %f), ", P0[0], P0[1], P0[2]);
                 line.first = {P0[0], P0[1], P0[2]};
                 sum_vec(P0, P, P0);
-                printf("(%f, %f, %f)\n", P0[0], P0[1], P0[2]);
                 line.second = {P0[0], P0[1], P0[2]};
                 lines.push_back(line);
                 break;
