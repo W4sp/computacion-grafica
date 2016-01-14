@@ -526,9 +526,4 @@ void read_desc(char *desc, double *P) {
             push = 0;
         }
     }
-
-    /* Vaciar pila */
-    while (!PilaEstados.empty()) {
-        PilaEstados.pop();
-    }
 }
