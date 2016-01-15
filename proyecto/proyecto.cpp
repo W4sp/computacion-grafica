@@ -20,9 +20,10 @@
 #define ESC             27
 #define DEBUG           0
 #define DIM             3
-#define MAX_DESC        16500
+#define MAX_DESC        120000
 #define DEFAULT_STEP    1
 #define DEFAULT_ANGLE   45
+#define DEFAULT_WIDTH	5.0
 
 /* 
  * Estructura para guardar estado actual del L-system.
@@ -34,13 +35,25 @@
 typedef struct {
     double T[DIM][DIM];
     double P[DIM];
+    double width;
+    double color;
 } State;
+
+typedef struct {
+	double P0[DIM];
+	double P1[DIM];
+	double width;
+	double size;
+	double color;
+	GLdouble T[16];
+} LineSegment;
 
 State EstadoActual;
 
 /* Pila para guardar estado actual al iniciar una nueva 'rama' (branch) */
 std::stack<State> PilaEstados;
-std::vector<std::pair<std::array<double, 3>, std::array<double, 3>>> lines;
+//std::vector<std::pair<std::array<double, 3>, std::array<double, 3>>> lines;
+std::vector<LineSegment> lines;
 
 float XAngle = 0.0;
 float YAngle = 0.0;
@@ -49,6 +62,7 @@ float YAngle = 0.0;
 char lsystem_desc[MAX_DESC + 1];
 double langle = DEFAULT_ANGLE;
 double lstep = DEFAULT_STEP;
+double lwidth 	= DEFAULT_WIDTH;
 
 /* Punto inicial */
 double P[DIM] = {0.0, 0.0, 0.0};
@@ -136,13 +150,20 @@ void drawScene() {
 
     /* Se renderizan los segmentos que conforman el fractal. */
     glColor4f(0.0, 1.0, 1.0, 1.0);
-    glBegin(GL_LINES);
+    GLUquadricObj *quadratic = gluNewQuadric();
+    //glBegin(GL_LINES);
         for (auto l : lines) {
-            glVertex4f(l.first[0], l.first[1], l.first[2], 1.0);
-            glVertex4f(l.second[0], l.second[1], l.second[2], 1.0);
+            //glVertex4f(l.P0[0], l.P0[1], l.P0[2], 1.0);
+            //glVertex4f(l.P1[0], l.P1[1], l.P1[2], 1.0);
+            glPushMatrix();
+            quadratic = gluNewQuadric();
+			/* Matriz de transformación generada por el L-system */
+            glMultMatrixd(l.T);
+            gluCylinder(quadratic, 0.02f*l.width, 0.02f*(l.width-(0.2*l.width)), l.size, 30, 30);
+			glPopMatrix();
         }
-    glEnd();
-
+    //glEnd();
+    
     /* Big yellow sphere */
     glPushMatrix();
     glTranslatef(8.0, 15.0, -1.0);
@@ -156,6 +177,8 @@ void drawScene() {
     glColor4f(0.0, 1.0, 0.0, 1.0);
     glutSolidSphere(0.5, 200, 200);
     glPopMatrix();
+
+    
 
     glutSwapBuffers();
 }
@@ -331,6 +354,17 @@ void Ru_matrix(double R[DIM][DIM], double angle) {
     assign_mat(R, mat);
 }
 
+/* Rotar en torno a eje Z */
+void Rz_matrix(double R[DIM][DIM], double angle) {
+    double alfa = (angle * PI)/180.0;
+    double mat[DIM][DIM] = {
+        {cos(alfa), sin(alfa * -1.0), 0},
+        {sin(alfa), cos(alfa), 0},
+        {0, 0, 1}
+    };
+    assign_mat(R, mat);
+}
+
 /* Rotar en torno a eje L (Y) */
 void Rl_matrix(double R[DIM][DIM], double angle) {
     double alfa = (angle * PI)/180.0;
@@ -338,6 +372,17 @@ void Rl_matrix(double R[DIM][DIM], double angle) {
         {cos(alfa), 0, sin(alfa * -1.0)},
         {0, 1, 0},
         {sin(alfa), 0, cos(alfa)}
+    };
+    assign_mat(R, mat);
+}
+
+/* Rotar en torno a eje Y */
+void Ry_matrix(double R[DIM][DIM], double angle) {
+    double alfa = (angle * PI)/180.0;
+    double mat[DIM][DIM] = {
+        {cos(alfa), 0, sin(alfa)},
+        {0, 1, 0},
+        {sin(alfa * -1.0), 0, cos(alfa)}
     };
     assign_mat(R, mat);
 }
@@ -353,6 +398,47 @@ void Rh_matrix(double R[DIM][DIM], double angle) {
     assign_mat(R, mat);
 }
 
+/* Rotar en torno a eje X */
+void Rx_matrix(double R[DIM][DIM], double angle) {
+    double alfa = (angle * PI)/180.0;
+    double mat[DIM][DIM] = {
+        {1, 0, 0},
+        {0, cos(alfa), sin(alfa * -1.0)},
+        {0, sin(alfa), cos(alfa)}
+    };
+    assign_mat(R, mat);
+}
+
+void assign_GL_mat(LineSegment *LS, double M[DIM][DIM])
+{
+	double T[DIM][DIM], R[DIM][DIM];
+	//printf("M matrix:\n");
+	//print_mat(M);
+	Ry_matrix(R, 90.0);
+    /* Aplicar la transformación R a T: T*R */
+	mat_by_mat(T, M, R);
+	
+	//printf("T matrix:\n");
+	//print_mat(T);
+                
+	LS->T[0] = T[0][0];
+	LS->T[1] = T[1][0];
+	LS->T[2] = T[2][0];
+	LS->T[3] = 0.0;
+	LS->T[4] = T[0][1];
+	LS->T[5] = T[1][1];
+	LS->T[6] = T[2][1];
+	LS->T[7] = 0.0;
+	LS->T[8] = T[0][2];
+	LS->T[9] = T[1][2];
+	LS->T[10] = T[2][2];
+	LS->T[11] = 0.0;
+	LS->T[12] = LS->P[0];
+	LS->T[13] = LS->P[1];
+	LS->T[14] = LS->P[2];
+	LS->T[15] = 1.0;
+}
+
 /*
  * Leer el string de descripción desde el índice 'start' hasta encontrar
  * un cierre de paréntesis.  Asumimos que la string es una cadena bien
@@ -364,6 +450,8 @@ void Rh_matrix(double R[DIM][DIM], double angle) {
 void get_argument(char *desc, int start, double *arg, int *jump) {
     int i = start;
     char str_arg[MAX_DESC+1];
+    
+    memset(str_arg, 0, MAX_DESC+1);
 
     if (desc[i+1] == '(') {
         i += 2;
@@ -400,12 +488,14 @@ void read_desc(char *desc, double *P) {
     double L[DIM] = {0, 0, 0};
     /* Punto inicial */
     double P0[DIM] = {P[0], P[1], P[2]};
+    LineSegment LS;
 
-    std::pair<std::array<double, 3>, std::array<double, 3>> line;
+    //std::pair<std::array<double, 3>, std::array<double, 3>> line;
 
     /* Estado inicial */
     assign_mat(EstadoActual.T, T);
     assign_vec(EstadoActual.P, P0);
+    EstadoActual.width = DEFAULT_WIDTH;
 
     for (unsigned int i = 0; i < strlen(desc); i++) {
         /* Lee caracter y verifica si existe argumento */
@@ -426,15 +516,30 @@ void read_desc(char *desc, double *P) {
                 /* Tamaño del segmento a dibujar */
                 L[0] = arg;
                 mat_by_vec(P, T, L);
-                line.first = {P0[0], P0[1], P0[2]};
+                
+                LS.P0[0] = P0[0];
+                LS.P0[1] = P0[1];
+                LS.P0[2] = P0[2];
+                
                 sum_vec(P0, P, P0);
-                line.second = {P0[0], P0[1], P0[2]};
-                lines.push_back(line);
+                
+                LS.P1[0] = P0[0];
+                LS.P1[1] = P0[1];
+                LS.P1[2] = P0[2];
+                
+                LS.width 	= EstadoActual.width;
+                LS.size 	= arg;
+                LS.color 	= 0.0;
+                
+                assign_GL_mat(&LS, T);
+                
+                lines.push_back(LS);
                 break;
             case '+':
                 if (!jump) arg = langle;
 
-                Ru_matrix(R, arg);
+                //Ru
+                Rz_matrix(R, arg*-1.0);
                 /* Aplicar la transformación R a T: T*R */
                 mat_by_mat(M, T, R);
                 assign_mat(T, M);
@@ -444,7 +549,8 @@ void read_desc(char *desc, double *P) {
             case '-':
                 if (!jump) arg = langle;
 
-                Ru_matrix(R, arg*-1.0);
+                //Ru
+                Rz_matrix(R, arg);
                 /* Aplicar la transformación R a T: T*R */
                 mat_by_mat(M, T, R);
                 assign_mat(T, M);
@@ -454,7 +560,8 @@ void read_desc(char *desc, double *P) {
             case '&':
                 if (!jump) arg = langle;
 
-                Rl_matrix(R, arg);
+                //Rl
+                Ry_matrix(R, arg*-1.0);
                 /* Aplicar la transformación R a T: T*R */
                 mat_by_mat(M, T, R);
                 assign_mat(T, M);
@@ -464,27 +571,30 @@ void read_desc(char *desc, double *P) {
             case '^':
                 if (!jump) arg = langle;
 
-                Rl_matrix(R, arg*-1.0);
+                //Rl
+                Ry_matrix(R, arg);
                 /* Aplicar la transformación R a T: T*R */
                 mat_by_mat(M, T, R);
                 assign_mat(T, M);
 
                 if (DEBUG) printf("Rotar hacia derecha en torno a eje L. Rl(-%f)\n", arg);
                 break;
-            case '\\':
+            case '/':
                 if (!jump) arg = langle;
 
-                Rh_matrix(R, arg);
+                //Rh
+                Rx_matrix(R, arg*-1.0);
                 /* Aplicar la transformación R a T: T*R */
                 mat_by_mat(M, T, R);
                 assign_mat(T, M);
 
                 if (DEBUG) printf("Rotar hacia izquierda en torno a eje H. Rh(%f)\n", arg);
                 break;
-            case '/':
+            case '\\':
                 if (!jump) arg = langle;
 
-                Rh_matrix(R, arg*-1.0);
+                //Rh
+                Rx_matrix(R, arg);
                 /* Aplicar la transformación R a T: T*R */
                 mat_by_mat(M, T, R);
                 assign_mat(T, M);
@@ -505,6 +615,12 @@ void read_desc(char *desc, double *P) {
 
                 if (DEBUG) printf("Obtener estado desde la pila y actualizarlo como estado actual.\n");
                 break;
+            case '!':
+				if (!jump) arg = lwidth;
+				
+				EstadoActual.width = arg;
+				
+				break;
             default:
                 break;
         }
